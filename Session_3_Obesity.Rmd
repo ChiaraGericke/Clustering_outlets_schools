@@ -6,6 +6,14 @@ date: "2025-03-05"
 
 ```{r}
 
+library(usethis)
+library(gitcreds)
+
+gitcreds_set()
+
+edit_git_config()
 
 ```
+
+
 
