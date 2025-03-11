@@ -2,5 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
-English IMD 2019.zip
+*.zip
 data/*
+*.pbf
+*.dat
+*.p
+*.mapdb
+*.json
