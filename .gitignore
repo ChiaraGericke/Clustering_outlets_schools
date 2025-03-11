@@ -2,3 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
+*.zip
+data/*
+*.pbf
+*.dat
+*.p
+*.mapdb
+*.json
