@@ -4,7 +4,11 @@ format: html
 editor: visual
 ---
 
+
+
 # Install packages
+
+
 
 ```{r}
 # install.packages("classInt")
@@ -43,7 +47,11 @@ editor: visual
 
 ```
 
+
+
 # Load packages
+
+
 
 ```{r}
 
@@ -83,9 +91,13 @@ library(tmaptools)
 
 ```
 
+
+
 # Import necessary data
 
 ## Read in shapefile of London
+
+
 
 ```{r}
 
@@ -124,7 +136,11 @@ qtm(london_LSOA)
 
 ```
 
+
+
 ## Download and read in the Index of Multiple Deprivation (IMD) data from the CDRC
+
+
 
 ```{r}
 
@@ -163,7 +179,11 @@ map
 
 ```
 
+
+
 ## Load Fast-food points from Open Street Map (OSM)
+
+
 
 ```{r}
 
@@ -201,7 +221,11 @@ map
 
 ```
 
+
+
 ## Load school points from Open Street Map (OSM)
+
+
 
 ```{r}
 
@@ -238,7 +262,11 @@ map <- tm_shape(schools_points) +
 map
 ```
 
+
+
 Alternatively, the Department for Education's Edubase database contains information for all schools - <https://get-information-schools.service.gov.uk/> - here we read that data in and filter for secondary schools in London
+
+
 
 ```{r}
 london_sec_schools <- read_csv("https://www.dropbox.com/scl/fi/fhzafgt27v30lmmuo084y/edubasealldata20241003.csv?rlkey=uorw43s44hnw5k9js3z0ksuuq&raw=1") %>% 
@@ -263,7 +291,11 @@ map
 
 ```
 
+
+
 ## Creating Point Pattern Process (PPP) Objects
+
+
 
 ```{r}
 
@@ -294,11 +326,15 @@ plot(lnd_ff_ppp)
 
 ```
 
+
+
 # Part 1 - IMD (Index of Multiple Deprivation) Analysis
 
 ## The aim of this analysis is to investigate whether areas with higher levels of deprivation have a greater density of fast-food outlets. This will help us determine if there are inequalities in fast-food outlet distribution based on area level deprivation - and if so, in which areas public health interventions should be prioritised.
 
 ## Creating a Raster from IMD Data
+
+
 
 ```{r}
 
@@ -313,7 +349,11 @@ plot(IMD_London_im)
 
 ```
 
+
+
 ## Quadrat Analysis on Fast Food Locations
+
+
 
 ```{r}
 
@@ -333,7 +373,11 @@ plot(quad_ff_IMD)
 
 ```
 
+
+
 ## Density Estimation with Rho Hat Plot
+
+
 
 ```{r}
 
@@ -353,43 +397,47 @@ plot(imd_ldn_score_raster)
 IMD_ldn_score_im <- as.im(imd_ldn_score_raster)
 
 # Plot the IM object
-plot(IMD_ldn_score_im)
+plot(imd_ldn_score_raster)
 plot(rhohat(lnd_ff_ppp, IMD_ldn_score_im))
 
 ```
+
+
 
 #Part 2 - Extending Spatial Point Pattern Analysis in the presence of a covariate (buffers around schools)
 
 ## The aim of this analysis is to determine which radius from schools captures the highest density of fast-food outlets. This will help us answer the question "How big should school fast-food exclusion zones be to cover areas of greatest exposure for school children?"
 
+
+
 ```{r}
 
-# # Set buffer distances
-# buffer_distances <- c(400, 800, 1200)
-# 
-# # Create a buffer dataset
-# buffers <- lapply(buffer_distances, function(dist) {
-#   st_buffer(schools_points, dist)
-# })
-# 
-# # Combine buffers into one sf dataframe and add a 'distance' column
-# buffer_sf <- do.call(rbind, lapply(seq_along(buffers), function(i) {
-#   cbind(buffers[[i]], distance = buffer_distances[i])
-# }))
-# 
-# # Ensure the new sf dataframe has proper CRS (coordinate reference system)
-# st_crs(buffer_sf) <- st_crs(schools_points)
-# 
-# # Save the resulting sf dataframe
-# # Create the map
-# buffer_map <- tm_shape(buffer_sf) +
-#   tm_polygons(
-#     col = "distance",       # Color by the 'distance' field
-#     alpha = 0.5,            # Set transparency to 0.5
-#     palette = "viridis"     # Use a color palette (you can customize this)
-#   ) 
-# 
-# buffer_map
+# Set buffer distances
+buffer_distances <- c(400, 800, 1200)
+
+# Create a buffer dataset
+buffers <- lapply(buffer_distances, function(dist) {
+  st_buffer(schools_points, dist)
+})
+
+# Combine buffers into one sf dataframe and add a 'distance' column
+buffer_sf <- do.call(rbind, lapply(seq_along(buffers), function(i) {
+  cbind(buffers[[i]], distance = buffer_distances[i])
+}))
+
+# Ensure the new sf dataframe has proper CRS (coordinate reference system)
+st_crs(buffer_sf) <- st_crs(schools_points)
+
+# Save the resulting sf dataframe
+# Create the map
+buffer_map <- tm_shape(buffer_sf) +
+  tm_polygons(
+    col = "distance",       # Color by the 'distance' field
+    alpha = 0.5,            # Set transparency to 0.5
+    palette = "viridis"     # Use a color palette (you can customize this)
+  ) 
+
+buffer_map
 
 ```
 
@@ -442,7 +490,7 @@ library(terra)
 # Convert your sf points to a SpatVector
 schools_vect <- vect(schools_points)
 # Create a base raster grid (adjust resolution as needed)
-r <- rast(ext(schools_vect), resolution = 100, crs = crs(schools_vect)) # Example: 10m resolution
+r <- rast(ext(schools_vect), resolution = 20, crs = crs(schools_vect)) # Example: 10m resolution
 
 # Create the distance surface
 distance_surface <- distance(r, schools_vect)
@@ -451,7 +499,7 @@ distance_surface <- distance(r, schools_vect)
 distance_surface_capped <- clamp(distance_surface, lower = 0, upper = 2000)
 
 # Plot the capped distance surface
-plot(distance_surface_capped, main = "Distance Surface (Capped at 2km)")
+plot(distance_surface_capped, main = "Distance Surface (Capped at 5000m)")
 
 tm_shape(distance_surface_capped) +
   tm_raster("lyr.1", palette = "viridis", title = "School Distance") 
@@ -460,7 +508,7 @@ df <- as.data.frame(distance_surface_capped,xy=TRUE)
 school_distance.im <- as.im(df)
 class(school_distance.im)
 
-plot(school_distance.im) 
+plot(school_distance.im)
 ```
 
 ```{r}
@@ -469,70 +517,74 @@ plot(rhohat(lnd_ff_ppp, school_distance.im))
 
 ```{r}
 
-# # Create buffers around the schools
-# buffer_400m <- st_buffer(schools_points, dist = 400)
-# buffer_800m <- st_buffer(schools_points, dist = 800)
-# buffer_1200m <- st_buffer(schools_points, dist = 1200)
-# 
-# tm_shape(buffer_400m) +
-#   tm_polygons(
-#     col = "red") 
-# 
-# tm_shape(buffer_800m) +
-#   tm_polygons(
-#     col = "green") 
-# 
-# tm_shape(buffer_1200m) +
-#   tm_polygons(
-#     col = "blue") 
-# 
-# 
-# 
-# # Plot the buffers to visualize the areas around the schools
-# plot(st_geometry(buffers_combined), col = c("red", "green", "blue"), main = "Buffers Around Schools", pch = 20)
-# 
-# buffers_combined <- buffer_sf %>% 
-#   select(c("establishment_name","distance", "geometry"))
-# # Now, let's rasterize each of the buffers using an appropriate rasterization process
-# school_buffers_raster <- st_rasterize(school_dist_buffers %>% dplyr::select(ID, x))
-# 
-# # Plot the rasterized IMD data
-# plot(school_buffers_raster)
-# 
-# # Rasterize each buffer (this can be done for each individual buffer as well)
-# buffer_400m_raster <- st_rasterize(buffer_400m)
-# buffer_800m_raster <- st_rasterize(buffer_800m)
-# buffer_1200m_raster <- st_rasterize(buffer_1200m)
-# 
-# plot(buffer_400m_raster)
-# 
-# 
-# # Adam - this is as far as I've gotten with the buffers. I'm not sure how to rasterize them. Do I need to rasterize the map and then the buffers seperately and then join them? Would be grateful if you could please help with this section of the code. 
-# 
-# 
-# 
-# # Plot the rasterized buffers to see the surface area coverage
-# plot(buffer_400m_raster, main = "400m Buffer Raster")
-# plot(buffer_800m_raster, main = "800m Buffer Raster")
-# plot(buffer_1200m_raster, main = "1200m Buffer Raster")
-# 
-# # Create an IM object from the raster (you can do this for any of the buffers)
-# buffer_400m_im <- as.im(buffer_400m_raster)
-# buffer_800m_im <- as.im(buffer_800m_raster)
-# buffer_1200m_im <- as.im(buffer_1200m_raster)
-# 
-# # Plot the IM objects
-# plot(buffer_400m_im, main = "400m Buffer IM")
-# plot(buffer_800m_im, main = "800m Buffer IM")
-# plot(buffer_1200m_im, main = "1200m Buffer IM")
+# Create buffers around the schools
+buffer_400m <- st_buffer(schools_points, dist = 400)
+buffer_800m <- st_buffer(schools_points, dist = 800)
+buffer_1200m <- st_buffer(schools_points, dist = 1200)
+
+tm_shape(buffer_400m) +
+  tm_polygons(
+    col = "red") 
+
+tm_shape(buffer_800m) +
+  tm_polygons(
+    col = "green") 
+
+tm_shape(buffer_1200m) +
+  tm_polygons(
+    col = "blue") 
+
+
+
+# Plot the buffers to visualize the areas around the schools
+plot(st_geometry(buffers_combined), col = c("red", "green", "blue"), main = "Buffers Around Schools", pch = 20)
+
+buffers_combined <- buffer_sf %>% 
+  select(c("establishment_name","distance", "geometry"))
+# Now, let's rasterize each of the buffers using an appropriate rasterization process
+school_buffers_raster <- st_rasterize(school_dist_buffers %>% dplyr::select(ID, x))
+
+# Plot the rasterized IMD data
+plot(school_buffers_raster)
+
+# Rasterize each buffer (this can be done for each individual buffer as well)
+buffer_400m_raster <- st_rasterize(buffer_400m)
+buffer_800m_raster <- st_rasterize(buffer_800m)
+buffer_1200m_raster <- st_rasterize(buffer_1200m)
+
+plot(buffer_400m_raster)
+
+
+# Adam - this is as far as I've gotten with the buffers. I'm not sure how to rasterize them. Do I need to rasterize the map and then the buffers seperately and then join them? Would be grateful if you could please help with this section of the code. 
+
+
+
+# Plot the rasterized buffers to see the surface area coverage
+plot(buffer_400m_raster, main = "400m Buffer Raster")
+plot(buffer_800m_raster, main = "800m Buffer Raster")
+plot(buffer_1200m_raster, main = "1200m Buffer Raster")
+
+# Create an IM object from the raster (you can do this for any of the buffers)
+buffer_400m_im <- as.im(buffer_400m_raster)
+buffer_800m_im <- as.im(buffer_800m_raster)
+buffer_1200m_im <- as.im(buffer_1200m_raster)
+
+# Plot the IM objects
+plot(buffer_400m_im, main = "400m Buffer IM")
+plot(buffer_800m_im, main = "800m Buffer IM")
+plot(buffer_1200m_im, main = "1200m Buffer IM")
 
 ```
+
+
 
 # Part 3 - Extending Spatial Point Pattern Analysis in the presence of a covariate (walking time bands) using R5 accessibility analysis
 
 ## The aim of this analysis is to determine the walking distance from schools that captures the highest density of fast-food outlets. This will help us answer the question "Within what walking distance from schools are children the most exposed to fast-food outlets?" We are going to do this for a single London borough for the purpose of this exercise (the borough of Croydon)
 
 ## Setup R5 Environment
+
+
 
 ```{r}
 
@@ -559,7 +611,11 @@ r5r_core <- setup_r5(here())
 
 ```
 
+
+
 ## Reproject Data to a Consistent CRS (EPSG 4326)
+
+
 
 ```{r}
 
@@ -578,7 +634,11 @@ london_boroughs_EPSG <- london_boroughs %>%
 
 ```
 
+
+
 ## Filter Data for the Borough of Croydon Only
+
+
 
 ```{r}
 
@@ -592,7 +652,11 @@ croydon_ff_pts <- fastfood_points_EPSG[croydon,]
 
 ```
 
+
+
 ## Generate Hexagonal Grid for Croydon
+
+
 
 ```{r}
 
@@ -621,7 +685,11 @@ tm_shape(croydon_sch_pts) +
 
 ```
 
+
+
 ## Travel Time Matrix Calculation
+
+
 
 ```{r}
 
@@ -656,7 +724,11 @@ summary(ttm_croydon_h3)
 
 ```
 
+
+
 ## Identify Closest Schools by Travel Time
+
+
 
 ```{r}
 
@@ -676,7 +748,11 @@ head(geo)
 
 ```
 
+
+
 ## Visualizing Travel Time Data
+
+
 
 ```{r}
 
@@ -689,7 +765,11 @@ tm_shape(croydon) +
 
 ```
 
+
+
 ## Convert Data to British National Grid (EPSG 27700) and Analyze Spatial Distribution
+
+
 
 ```{r}
 
@@ -705,7 +785,11 @@ plot(geo_hex_im)
 
 ```
 
+
+
 ## Quadrat Analysis of Fast Food Locations
+
+
 
 ```{r}
 
@@ -723,13 +807,21 @@ plot(croy_ff_ppp, pch=20, cols="grey70", main=NULL); plot(Q, add=T)
 
 ```
 
+
+
 ## Spatial Density Analysis
+
+
 
 ```{r}
 plot(rhohat(croy_ff_ppp, geo_hex_im))
 ```
 
+
+
 ## Kolmogorov-Smirnov Test for Spatial Distribution
+
+
 
 ```{r}
 
@@ -738,4 +830,7 @@ print(ks_result)
 
 ```
 
+
+
 # Practical session - now it's your turn. Select a different type of point from Open Street Map (<https://wiki.openstreetmap.org/wiki/Key:amenity>) which may have an impact on children's health and investigate whether they cluster disproportionately around schools.
+
